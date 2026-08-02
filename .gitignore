@@ -25,7 +25,7 @@ Carthage/Build/
 *.csr
 *.mobileprovision
 *.cer
-*-b64.txt
+*b64*.txt
 
 # Environment / secrets
 .env

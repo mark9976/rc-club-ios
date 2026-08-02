@@ -1,0 +1,42 @@
+name: RCClub
+options:
+  bundleIdPrefix: com.mark9976
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: "6W7CGPT3T5"
+    TARGETED_DEVICE_FAMILY: "1"
+targets:
+  RCClub:
+    type: application
+    platform: iOS
+    sources:
+      - path: RCClub
+        excludes:
+          - "Info.plist"
+          - "RCClub.entitlements"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mark9976.rcclub
+        INFOPLIST_FILE: RCClub/Info.plist
+        CODE_SIGN_ENTITLEMENTS: RCClub/RCClub.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_EMIT_LOC_STRINGS: true
+    entitlements:
+      path: RCClub/RCClub.entitlements
+      properties:
+        aps-environment: production
+schemes:
+  RCClub:
+    build:
+      targets:
+        RCClub: all
+    run:
+      config: Debug
+    archive:
+      config: Release

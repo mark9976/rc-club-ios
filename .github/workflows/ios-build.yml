@@ -1,0 +1,173 @@
+name: Build iOS App
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          if [ -d "/Applications/Xcode_26.0.1.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_26.0.1.app
+          elif [ -d "/Applications/Xcode_26.0.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_26.0.app
+          elif [ -d "/Applications/Xcode_26.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_26.app
+          else
+            LATEST=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+            sudo xcode-select -s "$LATEST"
+          fi
+          xcodebuild -version
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Set build number
+        run: |
+          echo "BUILD_NUMBER=${{ github.run_number }}" >> $GITHUB_ENV
+
+      - name: Generate app icon
+        run: |
+          pip3 install Pillow --break-system-packages -q
+          python3 << 'PYEOF'
+          from PIL import Image, ImageDraw
+          import json, os
+          W, H = 1024, 1024
+          img = Image.new('RGB', (W, H))
+          draw = ImageDraw.Draw(img)
+          for y in range(H):
+              t = y / H
+              r = int(18 + (31 - 18) * t)
+              g = int(31 + (48 - 31) * t)
+              b = int(43 + (64 - 43) * t)
+              draw.line([(0, y), (W, y)], fill=(r, g, b))
+          for radius in range(360, 0, -3):
+              a = int(26 * (1 - radius / 360))
+              draw.ellipse([W//2-radius, H//2-radius, W//2+radius, H//2+radius],
+                           fill=(0+a, 138+a//3, 162+a//3))
+          teal = (0, 176, 202)
+          white = (245, 248, 250)
+          draw.polygon([(512, 210), (760, 620), (512, 560), (264, 620)], fill=white)
+          draw.polygon([(512, 210), (512, 560), (264, 620)], fill=teal)
+          draw.polygon([(430, 690), (512, 560), (594, 690), (512, 660)], fill=white)
+          d = 'RCClub/Resources/Assets.xcassets/AppIcon.appiconset'
+          img.save(os.path.join(d, 'AppIcon.png'), 'PNG')
+          json.dump({
+              "images": [{"filename":"AppIcon.png","idiom":"universal","platform":"ios","size":"1024x1024"}],
+              "info": {"version":1,"author":"xcode"}
+          }, open(os.path.join(d, 'Contents.json'), 'w'), indent=2)
+          print('Icon generated')
+          PYEOF
+
+      - name: Generate Xcode project
+        run: xcodegen generate
+
+      - name: Inject build number into Info.plist
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ env.BUILD_NUMBER }}" RCClub/Info.plist
+          echo "Build number: ${{ env.BUILD_NUMBER }}"
+
+      - name: Install signing certificate
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERT_PATH=$RUNNER_TEMP/distribution.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+          echo -n "$APPLE_CERTIFICATE_BASE64" | base64 --decode -o $CERT_PATH
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security import $CERT_PATH -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+
+      - name: Install provisioning profile
+        env:
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          PP_PATH=$RUNNER_TEMP/rcclub.mobileprovision
+          echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i $PP_PATH))
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+          echo "PROV_PROFILE_UUID=$UUID" >> $GITHUB_ENV
+
+      - name: Build and archive
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcodebuild archive \
+            -project RCClub.xcodeproj \
+            -scheme RCClub \
+            -sdk iphoneos \
+            -configuration Release \
+            -archivePath $RUNNER_TEMP/RCClub.xcarchive \
+            DEVELOPMENT_TEAM=$APPLE_TEAM_ID \
+            PROVISIONING_PROFILE_SPECIFIER=${{ env.PROV_PROFILE_UUID }} \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution"
+
+      - name: Export IPA
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          cat > $RUNNER_TEMP/ExportOptions.plist << PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>teamID</key>
+            <string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.mark9976.rcclub</key>
+              <string>${{ env.PROV_PROFILE_UUID }}</string>
+            </dict>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath $RUNNER_TEMP/RCClub.xcarchive \
+            -exportPath $RUNNER_TEMP/export \
+            -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist
+
+      - name: Upload to TestFlight
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_API_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}
+          APP_STORE_CONNECT_API_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_API_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/private_keys
+          printenv APP_STORE_CONNECT_API_PRIVATE_KEY > ~/private_keys/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8
+          xcrun altool --upload-app \
+            -f $RUNNER_TEMP/export/RCClub.ipa \
+            -t ios \
+            --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+            --apiIssuer "$APP_STORE_CONNECT_API_ISSUER_ID" \
+            --show-progress
+
+      - name: Upload artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: RCClub-IPA
+          path: ${{ runner.temp }}/export/RCClub.ipa
+          retention-days: 30
+
+      - name: Cleanup keychain
+        if: always()
+        run: security delete-keychain $RUNNER_TEMP/app-signing.keychain-db || true

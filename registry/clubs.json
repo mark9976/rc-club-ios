@@ -1,0 +1,10 @@
+{
+  "clubs": [
+    {
+      "code": "LHMAC",
+      "name": "Laurel Highlands Model Airplane Club",
+      "server": "https://lhmac.org",
+      "logo": "https://lhmac.org/api/site-images/logo"
+    }
+  ]
+}

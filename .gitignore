@@ -1,0 +1,38 @@
+# Xcode / XcodeGen
+*.xcodeproj
+*.xcworkspace
+xcuserdata/
+DerivedData/
+.build/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+
+# Swift Package Manager
+.swiftpm/
+
+# CocoaPods / Carthage (unused, but ignore if present)
+Pods/
+Carthage/Build/
+
+# macOS
+.DS_Store
+
+# Signing material — never commit certificates, keys, or provisioning profiles
+*.p12
+*.pem
+*.key
+*.csr
+*.mobileprovision
+*.cer
+*-b64.txt
+
+# Environment / secrets
+.env
+.env.*
+
+# Fastlane (if ever introduced)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output

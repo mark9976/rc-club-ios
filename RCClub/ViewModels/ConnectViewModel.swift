@@ -33,7 +33,7 @@ final class ConnectViewModel {
     func toggleCheckIn(userId: Int, appState: AppState) async {
         do {
             if appState.isCheckedIn {
-                try await APIClient.shared.delete("/api/checkin", body: CheckInBody(userId: userId)) as Empty
+                let _: Empty = try await APIClient.shared.delete("/api/checkin", body: CheckInBody(userId: userId))
                 appState.isCheckedIn = false
             } else {
                 let _: Empty = try await APIClient.shared.post("/api/checkin", body: CheckInBody(userId: userId))

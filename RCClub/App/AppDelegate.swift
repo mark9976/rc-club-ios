@@ -29,7 +29,11 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     }
 
     /// Show banners even while the app is in the foreground.
-    func userNotificationCenter(
+    ///
+    /// `UNUserNotificationCenterDelegate` requirements are `nonisolated` and carry
+    /// non-`Sendable` parameter types, so these can't be `@MainActor`-isolated like
+    /// the rest of the class — they hop over explicitly wherever they touch `appState`.
+    nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
     ) async -> UNNotificationPresentationOptions {
@@ -37,11 +41,11 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     }
 
     /// User tapped a notification — route to the relevant screen.
-    func userNotificationCenter(
+    nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
         let userInfo = response.notification.request.content.userInfo
-        appState?.handleNotificationTap(userInfo: userInfo)
+        await appState?.handleNotificationTap(userInfo: userInfo)
     }
 }

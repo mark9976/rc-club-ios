@@ -1,8 +1,10 @@
 import Foundation
 
 extension ISO8601DateFormatter {
-    static let rcclub = ISO8601DateFormatter()
-    static let rcclubWithFractional: ISO8601DateFormatter = {
+    // Configured once and only ever read from afterward, so it's safe to share
+    // across isolation domains despite Foundation not marking it Sendable.
+    nonisolated(unsafe) static let rcclub = ISO8601DateFormatter()
+    nonisolated(unsafe) static let rcclubWithFractional: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
@@ -10,7 +12,7 @@ extension ISO8601DateFormatter {
 }
 
 extension DateFormatter {
-    static let rcclubDateOnly: DateFormatter = {
+    nonisolated(unsafe) static let rcclubDateOnly: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.locale = Locale(identifier: "en_US_POSIX")

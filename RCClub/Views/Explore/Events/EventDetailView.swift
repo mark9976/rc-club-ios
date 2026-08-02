@@ -1,5 +1,5 @@
 import SwiftUI
-import EventKit
+@preconcurrency import EventKit
 
 struct EventDetailView: View {
     @Environment(AppState.self) private var appState

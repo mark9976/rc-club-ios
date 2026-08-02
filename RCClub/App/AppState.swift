@@ -94,26 +94,26 @@ final class AppState {
         activeClub = savedClubs.first
     }
 
-    func handleNotificationTap(userInfo: [AnyHashable: Any]) {
-        guard let type = userInfo["type"] as? String else { return }
+    func handleNotificationTap(userInfo: [String: String]) {
+        guard let type = userInfo["type"] else { return }
         switch type {
         case "event":
-            if let id = (userInfo["eventId"] as? NSNumber)?.intValue {
+            if let id = userInfo["eventId"].flatMap(Int.init) {
                 pendingDeepLink = .event(id)
                 selectedTab = .explore
             }
         case "group", "groupMessage", "broadcast":
-            if let id = (userInfo["groupId"] as? NSNumber)?.intValue {
+            if let id = userInfo["groupId"].flatMap(Int.init) {
                 pendingDeepLink = .group(id)
                 selectedTab = .connect
             }
         case "lesson":
-            if let id = (userInfo["lessonId"] as? NSNumber)?.intValue {
+            if let id = userInfo["lessonId"].flatMap(Int.init) {
                 pendingDeepLink = .lesson(id)
                 selectedTab = .lessons
             }
         case "classified":
-            if let id = (userInfo["classifiedId"] as? NSNumber)?.intValue {
+            if let id = userInfo["classifiedId"].flatMap(Int.init) {
                 pendingDeepLink = .classified(id)
                 selectedTab = .explore
             }

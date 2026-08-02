@@ -41,11 +41,21 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     }
 
     /// User tapped a notification — route to the relevant screen.
+    ///
+    /// `userInfo` is `[AnyHashable: Any]`, which can never be `Sendable`. Flatten it to
+    /// a plain `[String: String]` here — while still nonisolated — before crossing over
+    /// to the main-actor-isolated `AppState`.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse
     ) async {
-        let userInfo = response.notification.request.content.userInfo
-        await appState?.handleNotificationTap(userInfo: userInfo)
+        let rawUserInfo = response.notification.request.content.userInfo
+        var payload: [String: String] = [:]
+        for (key, value) in rawUserInfo {
+            if let key = key as? String {
+                payload[key] = String(describing: value)
+            }
+        }
+        await appState?.handleNotificationTap(userInfo: payload)
     }
 }

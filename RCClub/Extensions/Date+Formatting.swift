@@ -12,7 +12,7 @@ extension ISO8601DateFormatter {
 }
 
 extension DateFormatter {
-    nonisolated(unsafe) static let rcclubDateOnly: DateFormatter = {
+    static let rcclubDateOnly: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.locale = Locale(identifier: "en_US_POSIX")

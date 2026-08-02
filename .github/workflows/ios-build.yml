@@ -106,13 +106,15 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          TEAM_ID="${APPLE_TEAM_ID:-6W7CGPT3T5}"
+          echo "Using development team: $TEAM_ID"
           xcodebuild archive \
             -project RCClub.xcodeproj \
             -scheme RCClub \
             -sdk iphoneos \
             -configuration Release \
             -archivePath $RUNNER_TEMP/RCClub.xcarchive \
-            DEVELOPMENT_TEAM=$APPLE_TEAM_ID \
+            DEVELOPMENT_TEAM="$TEAM_ID" \
             PROVISIONING_PROFILE_SPECIFIER=${{ env.PROV_PROFILE_UUID }} \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution"
@@ -121,6 +123,7 @@ jobs:
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
+          TEAM_ID="${APPLE_TEAM_ID:-6W7CGPT3T5}"
           cat > $RUNNER_TEMP/ExportOptions.plist << PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -129,7 +132,7 @@ jobs:
             <key>method</key>
             <string>app-store-connect</string>
             <key>teamID</key>
-            <string>$APPLE_TEAM_ID</string>
+            <string>$TEAM_ID</string>
             <key>signingStyle</key>
             <string>manual</string>
             <key>provisioningProfiles</key>

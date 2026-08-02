@@ -8,6 +8,7 @@ extension View {
     }
 }
 
+@MainActor
 enum Haptics {
     static func success() {
         UINotificationFeedbackGenerator().notificationOccurred(.success)

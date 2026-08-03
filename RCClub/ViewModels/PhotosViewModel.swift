@@ -11,7 +11,7 @@ final class PhotosViewModel {
     var isUploading = false
     var errorMessage: String?
 
-    private struct ApproveBody: Encodable { let id: String; let approved: Bool }
+    private struct PhotoIdBody: Encodable { let id: String }
 
     func loadPhotos() async {
         isLoading = true
@@ -54,12 +54,15 @@ final class PhotosViewModel {
         }
     }
 
+    // The server treats approve/reject as two distinct endpoints, each
+    // taking just {"id"} — no approved/status field on either. Sending a
+    // contradictory field (e.g. approved:false to /approve) is now rejected
+    // with a 400 rather than silently approving, so the two paths must stay
+    // genuinely separate here rather than a single call with a flag.
     func approve(_ photoId: String, approved: Bool) async {
+        let path = approved ? "/api/photos/approve" : "/api/photos/reject"
         do {
-            let _: Empty = try await APIClient.shared.post(
-                "/api/photos/approve",
-                body: ApproveBody(id: photoId, approved: approved)
-            )
+            let _: Empty = try await APIClient.shared.post(path, body: PhotoIdBody(id: photoId))
             pendingQueue.removeAll { $0.id == photoId }
             if approved {
                 await loadPhotos()

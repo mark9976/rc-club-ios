@@ -2,14 +2,14 @@ import Foundation
 
 struct LessonRequest: Codable, Identifiable, Hashable, Sendable {
     let id: Int
-    let studentId: Int
+    let studentId: String
     let studentName: String
     let type: String
     let experienceLevel: String
     let preferredTimes: String?
     let notes: String?
     let status: String // "pending", "accepted", "scheduled", "completed"
-    let instructorId: Int?
+    let instructorId: String?
     let instructorName: String?
     let scheduledDate: String?
     let createdAt: String

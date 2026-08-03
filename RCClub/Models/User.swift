@@ -1,7 +1,7 @@
 import Foundation
 
 struct User: Codable, Identifiable, Hashable, Sendable {
-    let id: Int
+    let id: String
     let name: String
     let email: String
     let role: String // "member", "admin", "instructor"

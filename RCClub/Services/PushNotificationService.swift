@@ -25,20 +25,20 @@ final class PushNotificationService {
     }
 
     /// Called from the app delegate once APNs hands back a device token.
-    func didReceiveDeviceToken(_ token: String, userId: Int?) {
+    func didReceiveDeviceToken(_ token: String, userId: String?) {
         pendingDeviceToken = token
         guard let userId else { return }
         Task { await registerDeviceToken(token, userId: userId) }
     }
 
     /// Called after login in case the device token arrived before the user signed in.
-    func registerCurrentDeviceIfNeeded(userId: Int) {
+    func registerCurrentDeviceIfNeeded(userId: String) {
         guard let token = pendingDeviceToken else { return }
         Task { await registerDeviceToken(token, userId: userId) }
     }
 
-    private func registerDeviceToken(_ token: String, userId: Int) async {
-        struct Body: Encodable { let deviceToken: String; let platform: String; let userId: Int }
+    private func registerDeviceToken(_ token: String, userId: String) async {
+        struct Body: Encodable { let deviceToken: String; let platform: String; let userId: String }
         do {
             let _: Empty = try await APIClient.shared.post(
                 "/api/push/register",

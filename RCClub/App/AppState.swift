@@ -26,7 +26,7 @@ final class AppState {
     // testing, never leave it on for a real release.
     static let bypassLoginForTesting = false
     private static let testUser = User(
-        id: 0,
+        id: "test-user",
         name: "Test User",
         email: "test@example.com",
         role: "admin",
@@ -66,6 +66,27 @@ final class AppState {
         loadCheckedInState()
         restoreSessionIfPossible()
         APIClient.shared.onUnauthorized = { [weak self] in self?.currentUser = nil }
+        refreshActiveClubFromRegistry()
+    }
+
+    /// The active club's server/logo URLs are cached locally from whenever it
+    /// was first selected, so a later registry change (e.g. moving from a raw
+    /// IP to a real HTTPS domain) wouldn't otherwise reach devices that already
+    /// picked this club. Re-fetch the registry on launch and self-heal.
+    private func refreshActiveClubFromRegistry() {
+        guard let club = activeClub else { return }
+        Task {
+            guard let freshClubs = try? await ClubRegistry.shared.fetchClubs(),
+                  let fresh = freshClubs.first(where: { $0.id == club.id }),
+                  fresh != club else { return }
+            await MainActor.run {
+                self.activeClub = fresh
+                if let index = self.savedClubs.firstIndex(where: { $0.id == fresh.id }) {
+                    self.savedClubs[index] = fresh
+                    self.persistSavedClubs()
+                }
+            }
+        }
     }
 
     private func loadCheckedInState() {

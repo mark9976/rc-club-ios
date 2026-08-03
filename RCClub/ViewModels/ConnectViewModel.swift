@@ -11,7 +11,7 @@ final class ConnectViewModel {
     var newGroupName = ""
     var isCreatingGroup = false
 
-    private struct CheckInBody: Encodable { let userId: Int }
+    private struct CheckInBody: Encodable { let userId: String }
     private struct CreateGroupBody: Encodable { let name: String }
 
     func loadAll() async {
@@ -30,7 +30,7 @@ final class ConnectViewModel {
         }
     }
 
-    func toggleCheckIn(userId: Int, appState: AppState) async {
+    func toggleCheckIn(userId: String, appState: AppState) async {
         do {
             if appState.isCheckedIn {
                 let _: Empty = try await APIClient.shared.delete("/api/checkin", body: CheckInBody(userId: userId))

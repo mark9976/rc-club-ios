@@ -1,7 +1,7 @@
 import Foundation
 
 struct CheckIn: Codable, Sendable {
-    let userId: Int
+    let userId: String
     let checkedInAt: String
     let expiresAt: String
 }

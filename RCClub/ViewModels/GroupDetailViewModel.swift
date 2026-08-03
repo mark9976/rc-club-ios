@@ -16,7 +16,7 @@ final class GroupDetailViewModel {
 
     private struct SendMessageBody: Encodable { let text: String }
     private struct BroadcastBody: Encodable { let text: String }
-    private struct AddMemberBody: Encodable { let userId: Int }
+    private struct AddMemberBody: Encodable { let userId: String }
     private struct RenameBody: Encodable { let name: String }
 
     init(group: RCGroup) {
@@ -67,7 +67,7 @@ final class GroupDetailViewModel {
         }
     }
 
-    func addMember(userId: Int) async {
+    func addMember(userId: String) async {
         do {
             let member: GroupMember = try await APIClient.shared.post(
                 "/api/groups/\(group.id)/members",
@@ -79,7 +79,7 @@ final class GroupDetailViewModel {
         }
     }
 
-    func removeMember(userId: Int) async {
+    func removeMember(userId: String) async {
         do {
             try await APIClient.shared.deleteVoid("/api/groups/\(group.id)/members/\(userId)")
             members.removeAll { $0.userId == userId }
@@ -111,7 +111,7 @@ final class GroupDetailViewModel {
     }
 
     @discardableResult
-    func leaveGroup(currentUserId: Int) async -> Bool {
+    func leaveGroup(currentUserId: String) async -> Bool {
         await removeMember(userId: currentUserId)
         return errorMessage == nil
     }

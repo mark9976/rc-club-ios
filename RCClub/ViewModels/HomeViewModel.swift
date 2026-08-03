@@ -13,7 +13,7 @@ final class HomeViewModel {
     var isTogglingCheckIn = false
     var errorMessage: String?
 
-    private struct CheckInBody: Encodable { let userId: Int }
+    private struct CheckInBody: Encodable { let userId: String }
 
     func loadAll() async {
         isLoading = true
@@ -52,7 +52,7 @@ final class HomeViewModel {
         fieldStatus = try? await APIClient.shared.get("/api/field-status")
     }
 
-    func toggleCheckIn(userId: Int, appState: AppState) async {
+    func toggleCheckIn(userId: String, appState: AppState) async {
         isTogglingCheckIn = true
         do {
             if appState.isCheckedIn {

@@ -8,7 +8,7 @@ struct ClassifiedListing: Codable, Identifiable, Hashable, Sendable {
     let description: String
     let photos: [String] // URLs
     let sellerName: String
-    let sellerId: Int
+    let sellerId: String
     let isSold: Bool
     let createdAt: String
 }

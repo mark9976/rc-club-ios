@@ -20,13 +20,11 @@ enum DeepLink: Equatable {
 final class AppState {
     // MARK: - TESTING ONLY — login bypass
     //
-    // The club server isn't reachable over HTTPS yet, so real login can't be
-    // exercised end to end. This flag skips straight past LoginView with a
-    // mock "admin" user so the rest of the app is testable in the meantime.
-    //
-    // ⚠️ Flip this to `false` once the server is live and login works —
-    // it is NOT gated by #if DEBUG, so it ships in Release/TestFlight builds too.
-    static let bypassLoginForTesting = true
+    // Was needed while the server was only reachable over plain HTTP without
+    // a working login flow. Now that lhmac.info is live on HTTPS with real
+    // login working, this is off — flip back to `true` only for short-term
+    // testing, never leave it on for a real release.
+    static let bypassLoginForTesting = false
     private static let testUser = User(
         id: 0,
         name: "Test User",

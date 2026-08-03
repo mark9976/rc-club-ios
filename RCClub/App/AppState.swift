@@ -18,6 +18,25 @@ enum DeepLink: Equatable {
 @Observable
 @MainActor
 final class AppState {
+    // MARK: - TESTING ONLY — login bypass
+    //
+    // The club server isn't reachable over HTTPS yet, so real login can't be
+    // exercised end to end. This flag skips straight past LoginView with a
+    // mock "admin" user so the rest of the app is testable in the meantime.
+    //
+    // ⚠️ Flip this to `false` once the server is live and login works —
+    // it is NOT gated by #if DEBUG, so it ships in Release/TestFlight builds too.
+    static let bypassLoginForTesting = true
+    private static let testUser = User(
+        id: 0,
+        name: "Test User",
+        email: "test@example.com",
+        role: "admin",
+        profilePhoto: nil,
+        memberSince: nil,
+        amaNumber: nil
+    )
+
     private(set) var savedClubs: [Club] = []
     var activeClub: Club? {
         didSet { persistActiveClub() }
@@ -64,14 +83,16 @@ final class AppState {
             persistSavedClubs()
         }
         activeClub = club
-        currentUser = nil
+        currentUser = Self.bypassLoginForTesting ? Self.testUser : nil
     }
 
     func switchClub(_ club: Club) {
         guard club.id != activeClub?.id else { return }
-        currentUser = nil
+        currentUser = Self.bypassLoginForTesting ? Self.testUser : nil
         activeClub = club
-        restoreSessionIfPossible()
+        if !Self.bypassLoginForTesting {
+            restoreSessionIfPossible()
+        }
     }
 
     func completeLogin(user: User) {
@@ -128,6 +149,10 @@ final class AppState {
     // MARK: - Persistence
 
     private func restoreSessionIfPossible() {
+        if Self.bypassLoginForTesting {
+            currentUser = Self.testUser
+            return
+        }
         guard let club = activeClub,
               let token = KeychainHelper.shared.readToken(forClub: club.id) else { return }
         APIClient.shared.configure(baseURL: club.server, token: token)

@@ -21,7 +21,7 @@ final class ClassifiedsViewModel {
 
     var filteredListings: [ClassifiedListing] {
         guard let selectedCategory else { return listings }
-        return listings.filter { $0.category == selectedCategory.rawValue }
+        return listings.filter { $0.category.caseInsensitiveCompare(selectedCategory.rawValue) == .orderedSame }
     }
 
     func loadListings() async {

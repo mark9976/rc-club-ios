@@ -89,8 +89,8 @@ private struct ClassifiedCard: View {
                 .lineLimit(1)
                 .foregroundStyle(.primary)
             HStack {
-                if let price = listing.price {
-                    Text(price, format: .currency(code: "USD"))
+                if let price = listing.price, let priceValue = Double(price) {
+                    Text(priceValue, format: .currency(code: "USD"))
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(Color.accentTeal)
                 }

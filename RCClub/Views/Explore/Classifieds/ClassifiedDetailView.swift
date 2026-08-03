@@ -25,8 +25,8 @@ struct ClassifiedDetailView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(listing.title).font(.title2.bold())
                     HStack {
-                        if let price = listing.price {
-                            Text(price, format: .currency(code: "USD"))
+                        if let price = listing.price, let priceValue = Double(price) {
+                            Text(priceValue, format: .currency(code: "USD"))
                                 .font(.title3.weight(.semibold))
                                 .foregroundStyle(Color.accentTeal)
                         }

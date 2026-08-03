@@ -89,7 +89,12 @@ struct ClassifiedDetailView: View {
     }
 
     private func contactSeller() async {
-        guard let seller: User = try? await APIClient.shared.get("/api/members/\(listing.sellerId)"),
+        // There's no single-member endpoint — /api/members/{id} 404s. Pull the
+        // full roster instead and find the seller in it.
+        struct MembersResponse: Decodable { let members: [User] }
+        guard let response: MembersResponse = try? await APIClient.shared.get("/api/members"),
+              let seller = response.members.first(where: { $0.id == listing.sellerId }),
+              !seller.email.isEmpty,
               let url = URL(string: "mailto:\(seller.email)") else { return }
         await UIApplication.shared.open(url)
     }

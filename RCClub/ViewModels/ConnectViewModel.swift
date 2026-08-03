@@ -17,16 +17,18 @@ final class ConnectViewModel {
     func loadAll() async {
         isLoading = true
         errorMessage = nil
-        async let countTask: CheckInCount? = try? APIClient.shared.get("/api/checkin/count")
+        // There's no standalone /api/checkin/count endpoint — the live count
+        // comes back as part of /api/field-status instead.
+        async let statusTask: FieldStatus? = try? APIClient.shared.get("/api/field-status")
         async let groupsTask: [RCGroup]? = try? APIClient.shared.get("/api/groups")
-        communityCount = await countTask?.count ?? 0
+        communityCount = await statusTask?.checkedInCount ?? 0
         groups = await groupsTask ?? []
         isLoading = false
     }
 
     func refreshCommunityCount() async {
-        if let count: CheckInCount = try? await APIClient.shared.get("/api/checkin/count") {
-            communityCount = count.count
+        if let status: FieldStatus = try? await APIClient.shared.get("/api/field-status") {
+            communityCount = status.checkedInCount
         }
     }
 

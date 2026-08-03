@@ -47,7 +47,7 @@ private struct GroupRow: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(group.name)
                         .font(.body.weight(.medium))
-                    Text("\(group.memberCount) members")
+                    Text("\(group.memberCount ?? 0) members")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

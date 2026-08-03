@@ -54,7 +54,7 @@ struct GroupDetailView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 ForEach(viewModel.checkedInMembers) { member in
-                    Label(member.name, systemImage: "mappin.circle.fill")
+                    Label(member.userName, systemImage: "mappin.circle.fill")
                         .font(.caption.weight(.medium))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)

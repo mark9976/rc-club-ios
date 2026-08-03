@@ -25,7 +25,7 @@ struct ManageGroupView: View {
                 Section("Members") {
                     ForEach(viewModel.members) { member in
                         HStack {
-                            Text(member.name)
+                            Text(member.userName)
                             Spacer()
                             if member.isCheckedIn {
                                 Text("At field")

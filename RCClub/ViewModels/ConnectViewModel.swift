@@ -13,6 +13,8 @@ final class ConnectViewModel {
 
     private struct CheckInBody: Encodable { let userId: String }
     private struct CreateGroupBody: Encodable { let name: String }
+    private struct GroupsListResponse: Decodable { let groups: [RCGroup] }
+    private struct GroupResponse: Decodable { let group: RCGroup }
 
     func loadAll() async {
         isLoading = true
@@ -20,9 +22,9 @@ final class ConnectViewModel {
         // There's no standalone /api/checkin/count endpoint — the live count
         // comes back as part of /api/field-status instead.
         async let statusTask: FieldStatus? = try? APIClient.shared.get("/api/field-status")
-        async let groupsTask: [RCGroup]? = try? APIClient.shared.get("/api/groups")
+        async let groupsTask: GroupsListResponse? = try? APIClient.shared.get("/api/connect-groups/")
         communityCount = await statusTask?.checkedInCount ?? 0
-        groups = await groupsTask ?? []
+        groups = await groupsTask?.groups ?? []
         isLoading = false
     }
 
@@ -54,13 +56,13 @@ final class ConnectViewModel {
         isCreatingGroup = true
         defer { isCreatingGroup = false }
         do {
-            let group: RCGroup = try await APIClient.shared.post(
-                "/api/groups",
+            let response: GroupResponse = try await APIClient.shared.post(
+                "/api/connect-groups/",
                 body: CreateGroupBody(name: newGroupName)
             )
-            groups.append(group)
+            groups.append(response.group)
             newGroupName = ""
-            return group
+            return response.group
         } catch {
             errorMessage = error.localizedDescription
             return nil

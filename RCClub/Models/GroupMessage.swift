@@ -1,8 +1,8 @@
 import Foundation
 
 struct GroupMessage: Codable, Identifiable, Sendable {
-    let id: Int
-    let groupId: Int
+    let id: String
+    let groupId: String
     let senderId: String
     let senderName: String
     let text: String

@@ -14,10 +14,16 @@ final class GroupDetailViewModel {
 
     var checkedInMembers: [GroupMember] { members.filter(\.isCheckedIn) }
 
-    private struct SendMessageBody: Encodable { let text: String }
-    private struct BroadcastBody: Encodable { let text: String }
+    private struct SendMessageBody: Encodable { let text: String; let isBroadcast: Bool }
     private struct AddMemberBody: Encodable { let userId: String }
     private struct RenameBody: Encodable { let name: String }
+
+    private struct MembersResponse: Decodable { let members: [GroupMember] }
+    private struct MessagesResponse: Decodable { let messages: [GroupMessage] }
+    private struct MessageResponse: Decodable { let message: GroupMessage }
+    private struct GroupResponse: Decodable { let group: RCGroup }
+
+    private var basePath: String { "/api/connect-groups/\(group.id)" }
 
     init(group: RCGroup) {
         self.group = group
@@ -26,13 +32,13 @@ final class GroupDetailViewModel {
     func loadAll() async {
         isLoading = true
         errorMessage = nil
-        async let membersTask: [GroupMember]? = try? APIClient.shared.get("/api/groups/\(group.id)/members")
-        async let messagesTask: [GroupMessage]? = try? APIClient.shared.get(
-            "/api/groups/\(group.id)/messages",
+        async let membersTask: MembersResponse? = try? APIClient.shared.get("\(basePath)/members/")
+        async let messagesTask: MessagesResponse? = try? APIClient.shared.get(
+            "\(basePath)/messages/",
             query: ["page": "1", "limit": "50"]
         )
-        members = await membersTask ?? []
-        messages = (await messagesTask ?? []).sorted {
+        members = await membersTask?.members ?? []
+        messages = (await messagesTask?.messages ?? []).sorted {
             ($0.sentAt.asDate ?? .distantPast) < ($1.sentAt.asDate ?? .distantPast)
         }
         isLoading = false
@@ -42,38 +48,34 @@ final class GroupDetailViewModel {
         let text = messageText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { return }
         messageText = ""
+        await send(text: text, isBroadcast: false)
+    }
+
+    func sendBroadcast(_ broadcast: QuickBroadcast) async {
+        await send(text: broadcast.rawValue, isBroadcast: true)
+    }
+
+    private func send(text: String, isBroadcast: Bool) async {
         isSending = true
         do {
-            let message: GroupMessage = try await APIClient.shared.post(
-                "/api/groups/\(group.id)/messages",
-                body: SendMessageBody(text: text)
+            let response: MessageResponse = try await APIClient.shared.post(
+                "\(basePath)/messages/",
+                body: SendMessageBody(text: text, isBroadcast: isBroadcast)
             )
-            messages.append(message)
+            messages.append(response.message)
         } catch {
             errorMessage = error.localizedDescription
         }
         isSending = false
     }
 
-    func sendBroadcast(_ broadcast: QuickBroadcast) async {
-        do {
-            let _: Empty = try await APIClient.shared.post(
-                "/api/groups/\(group.id)/broadcast",
-                body: BroadcastBody(text: broadcast.rawValue)
-            )
-            await loadAll()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-    }
-
     func addMember(userId: String) async {
         do {
-            let member: GroupMember = try await APIClient.shared.post(
-                "/api/groups/\(group.id)/members",
+            let response: MembersResponse = try await APIClient.shared.post(
+                "\(basePath)/members/",
                 body: AddMemberBody(userId: userId)
             )
-            members.append(member)
+            members = response.members
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -81,7 +83,7 @@ final class GroupDetailViewModel {
 
     func removeMember(userId: String) async {
         do {
-            try await APIClient.shared.deleteVoid("/api/groups/\(group.id)/members/\(userId)")
+            try await APIClient.shared.deleteVoid("\(basePath)/members/\(userId)/")
             members.removeAll { $0.userId == userId }
         } catch {
             errorMessage = error.localizedDescription
@@ -90,11 +92,11 @@ final class GroupDetailViewModel {
 
     func rename(to name: String) async {
         do {
-            let updated: RCGroup = try await APIClient.shared.put(
-                "/api/groups/\(group.id)",
+            let response: GroupResponse = try await APIClient.shared.put(
+                "\(basePath)/",
                 body: RenameBody(name: name)
             )
-            group = updated
+            group = response.group
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -102,7 +104,7 @@ final class GroupDetailViewModel {
 
     func deleteGroup() async -> Bool {
         do {
-            try await APIClient.shared.deleteVoid("/api/groups/\(group.id)")
+            try await APIClient.shared.deleteVoid("\(basePath)/")
             return true
         } catch {
             errorMessage = error.localizedDescription

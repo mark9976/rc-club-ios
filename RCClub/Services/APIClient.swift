@@ -56,6 +56,12 @@ final class APIClient: @unchecked Sendable {
         lock.lock(); _token = token; lock.unlock()
     }
 
+    /// Resolves a server-relative path (e.g. from a `filename` the API gives
+    /// back) against the active club's base URL, for building image/file URLs.
+    func fileURL(_ path: String) -> URL? {
+        baseURL?.appendingPathComponent(path)
+    }
+
     // MARK: - Requests
 
     func get<T: Decodable>(_ path: String, query: [String: String] = [:]) async throws -> T {

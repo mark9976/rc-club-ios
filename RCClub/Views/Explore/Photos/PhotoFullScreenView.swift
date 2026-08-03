@@ -3,7 +3,7 @@ import SwiftUI
 struct PhotoFullScreenView: View {
     @Environment(\.dismiss) private var dismiss
     let photos: [Photo]
-    @State private var currentId: Int
+    @State private var currentId: String
 
     init(photos: [Photo], selected: Photo) {
         self.photos = photos

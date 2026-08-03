@@ -19,12 +19,18 @@ final class HomeViewModel {
         isLoading = true
         errorMessage = nil
 
-        async let statusTask: FieldStatus? = try? APIClient.shared.get("/api/field-status")
+        async let statusResult = Self.fetchResult { try await APIClient.shared.get("/api/field-status") as FieldStatus }
         async let forecastTask: WeatherData.Forecast? = try? APIClient.shared.get("/api/forecast")
         async let eventsTask: [Event]? = try? APIClient.shared.get("/api/events")
         async let photosTask: [Photo]? = try? APIClient.shared.get("/api/photos/recent")
 
-        fieldStatus = await statusTask
+        switch await statusResult {
+        case .success(let status):
+            fieldStatus = status
+        case .failure(let error):
+            fieldStatus = nil
+            errorMessage = error.localizedDescription
+        }
         if let forecast = await forecastTask {
             weather = forecast.current
             forecastDays = forecast.days
@@ -32,6 +38,14 @@ final class HomeViewModel {
         nextEvent = await eventsTask?.first
         recentPhotos = await photosTask ?? []
         isLoading = false
+    }
+
+    private static func fetchResult<T>(_ operation: @Sendable () async throws -> T) async -> Result<T, Error> {
+        do {
+            return .success(try await operation())
+        } catch {
+            return .failure(error)
+        }
     }
 
     func refreshFieldStatus() async {

@@ -3,6 +3,7 @@ import SwiftUI
 struct PhotoQueueView: View {
     @Environment(\.dismiss) private var dismiss
     var viewModel: PhotosViewModel
+    @State private var previewPhoto: Photo?
 
     var body: some View {
         NavigationStack {
@@ -21,7 +22,7 @@ struct PhotoQueueView: View {
                             Text(error).foregroundStyle(Color.dangerRed)
                         }
                         ForEach(viewModel.pendingQueue) { photo in
-                            PhotoQueueRow(photo: photo) { approved in
+                            PhotoQueueRow(photo: photo, onTapThumbnail: { previewPhoto = photo }) { approved in
                                 await viewModel.approve(photo.id, approved: approved)
                             }
                         }
@@ -38,20 +39,27 @@ struct PhotoQueueView: View {
                 }
             }
             .task { await viewModel.loadPendingQueue() }
+            .fullScreenCover(item: $previewPhoto) { photo in
+                PhotoFullScreenView(photos: [photo], selected: photo)
+            }
         }
     }
 }
 
 private struct PhotoQueueRow: View {
     let photo: Photo
+    let onTapThumbnail: () -> Void
     let onDecision: (Bool) async -> Void
     @State private var isProcessing = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            AsyncImageLoader(url: URL(string: photo.url), contentMode: .fill, cornerRadius: 10)
-                .frame(width: 80, height: 80)
-                .clipped()
+            Button(action: onTapThumbnail) {
+                AsyncImageLoader(url: URL(string: photo.url), contentMode: .fill, cornerRadius: 10)
+                    .frame(width: 80, height: 80)
+                    .clipped()
+            }
+            .buttonStyle(.plain)
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(photo.uploadedBy)

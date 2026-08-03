@@ -11,7 +11,7 @@ final class PhotosViewModel {
     var isUploading = false
     var errorMessage: String?
 
-    private struct ApproveBody: Encodable { let photoId: String; let approved: Bool }
+    private struct ApproveBody: Encodable { let id: String; let approved: Bool }
 
     func loadPhotos() async {
         isLoading = true
@@ -58,7 +58,7 @@ final class PhotosViewModel {
         do {
             let _: Empty = try await APIClient.shared.post(
                 "/api/photos/approve",
-                body: ApproveBody(photoId: photoId, approved: approved)
+                body: ApproveBody(id: photoId, approved: approved)
             )
             pendingQueue.removeAll { $0.id == photoId }
             if approved {

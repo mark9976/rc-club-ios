@@ -7,6 +7,7 @@ final class PhotosViewModel {
     var photos: [Photo] = []
     var pendingQueue: [Photo] = []
     var isLoading = false
+    var isLoadingQueue = false
     var isUploading = false
     var errorMessage: String?
 
@@ -24,11 +25,14 @@ final class PhotosViewModel {
     }
 
     func loadPendingQueue() async {
+        isLoadingQueue = true
+        errorMessage = nil
         do {
             pendingQueue = try await APIClient.shared.get("/api/photos/queue")
         } catch {
             errorMessage = error.localizedDescription
         }
+        isLoadingQueue = false
     }
 
     func upload(data: Data, filename: String) async -> Bool {

@@ -41,3 +41,9 @@ extension ClassifiedListing: Decodable {
             ?? false
     }
 }
+
+enum ClassifiedCategory: String, CaseIterable, Identifiable, Sendable {
+    case planes, radios, engines, accessories, other
+    var id: String { rawValue }
+    var label: String { rawValue.capitalized }
+}

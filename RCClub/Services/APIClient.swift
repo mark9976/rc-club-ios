@@ -104,6 +104,7 @@ final class APIClient: @unchecked Sendable {
         let url = base.appendingPathComponent(path)
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         let boundary = "Boundary-\(UUID().uuidString)"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         if let token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
@@ -138,6 +139,10 @@ final class APIClient: @unchecked Sendable {
 
         var request = URLRequest(url: url)
         request.httpMethod = method
+        // This app is always-online with no offline mode, and the server data
+        // (field status, check-ins, messages, ...) changes from other clients
+        // constantly — never let URLSession serve a stale cached response.
+        request.cachePolicy = .reloadIgnoringLocalCacheData
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if let token { request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization") }
         if let body, !(body is Empty) {

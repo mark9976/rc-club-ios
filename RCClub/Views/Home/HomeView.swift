@@ -3,7 +3,9 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel = HomeViewModel()
+    @State private var photosViewModel = PhotosViewModel()
     @State private var selectedPhoto: Photo?
+    @State private var showCameraUpload = false
 
     var body: some View {
         NavigationStack {
@@ -55,12 +57,25 @@ struct HomeView: View {
             }
             .background(Color.screenBackground)
             .navigationTitle("Home")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showCameraUpload = true
+                    } label: {
+                        Image(systemName: "camera.fill")
+                    }
+                    .accessibilityLabel("Take Photo")
+                }
+            }
             .refreshable { await viewModel.loadAll() }
             .navigationDestination(for: Event.self) { event in
                 EventDetailView(event: event)
             }
             .fullScreenCover(item: $selectedPhoto) { photo in
                 PhotoFullScreenView(photos: viewModel.recentPhotos, selected: photo)
+            }
+            .sheet(isPresented: $showCameraUpload) {
+                PhotoUploadView(viewModel: photosViewModel, autoLaunchCamera: true, cameraOnly: true)
             }
         }
         .task { await viewModel.loadAll() }

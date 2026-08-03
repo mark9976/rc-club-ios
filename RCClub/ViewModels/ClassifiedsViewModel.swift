@@ -17,6 +17,7 @@ final class ClassifiedsViewModel {
         let description: String
     }
     private struct SoldBody: Encodable { let isSold: Bool }
+    private struct ClassifiedsResponse: Decodable { let classifieds: [ClassifiedListing] }
 
     var filteredListings: [ClassifiedListing] {
         guard let selectedCategory else { return listings }
@@ -27,7 +28,8 @@ final class ClassifiedsViewModel {
         isLoading = true
         errorMessage = nil
         do {
-            listings = try await APIClient.shared.get("/api/classifieds")
+            let response: ClassifiedsResponse = try await APIClient.shared.get("/api/classifieds")
+            listings = response.classifieds
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -59,7 +61,7 @@ final class ClassifiedsViewModel {
         }
     }
 
-    func markSold(_ id: Int) async {
+    func markSold(_ id: String) async {
         do {
             let updated: ClassifiedListing = try await APIClient.shared.put(
                 "/api/classifieds/\(id)",
@@ -73,7 +75,7 @@ final class ClassifiedsViewModel {
         }
     }
 
-    func deleteListing(_ id: Int) async {
+    func deleteListing(_ id: String) async {
         do {
             try await APIClient.shared.deleteVoid("/api/classifieds/\(id)")
             listings.removeAll { $0.id == id }

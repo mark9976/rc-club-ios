@@ -8,6 +8,8 @@ final class NewsletterViewModel {
     var isLoading = false
     var errorMessage: String?
 
+    private struct NewslettersResponse: Decodable { let newsletters: [Newsletter] }
+
     var sortedNewsletters: [Newsletter] {
         newsletters.sorted { ($0.date.asDate ?? .distantPast) > ($1.date.asDate ?? .distantPast) }
     }
@@ -16,7 +18,8 @@ final class NewsletterViewModel {
         isLoading = true
         errorMessage = nil
         do {
-            newsletters = try await APIClient.shared.get("/api/newsletters")
+            let response: NewslettersResponse = try await APIClient.shared.get("/api/newsletters")
+            newsletters = response.newsletters
         } catch {
             errorMessage = error.localizedDescription
         }

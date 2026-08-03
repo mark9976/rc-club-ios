@@ -1,7 +1,7 @@
 import Foundation
 
 struct ClassifiedListing: Codable, Identifiable, Hashable, Sendable {
-    let id: Int
+    let id: String
     let title: String
     let price: Double?
     let category: String

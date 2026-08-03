@@ -16,6 +16,8 @@ final class EventsViewModel {
         let description: String?
     }
 
+    private struct EventsResponse: Decodable { let events: [Event] }
+
     var sortedEvents: [Event] {
         events.sorted { ($0.date.asDate ?? .distantFuture) < ($1.date.asDate ?? .distantFuture) }
     }
@@ -24,7 +26,8 @@ final class EventsViewModel {
         isLoading = true
         errorMessage = nil
         do {
-            events = try await APIClient.shared.get("/api/events")
+            let response: EventsResponse = try await APIClient.shared.get("/api/events")
+            events = response.events
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -43,7 +46,7 @@ final class EventsViewModel {
         }
     }
 
-    func updateEvent(_ id: Int, title: String, date: String, time: String?, location: String?, description: String?) async {
+    func updateEvent(_ id: String, title: String, date: String, time: String?, location: String?, description: String?) async {
         do {
             let event: Event = try await APIClient.shared.put(
                 "/api/events/\(id)",
@@ -57,7 +60,7 @@ final class EventsViewModel {
         }
     }
 
-    func deleteEvent(_ id: Int) async {
+    func deleteEvent(_ id: String) async {
         do {
             try await APIClient.shared.deleteVoid("/api/events/\(id)")
             events.removeAll { $0.id == id }

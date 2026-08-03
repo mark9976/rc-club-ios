@@ -6,10 +6,10 @@ enum AppTab: Hashable {
 }
 
 enum DeepLink: Equatable {
-    case event(Int)
+    case event(String)
     case group(Int)
     case lesson(Int)
-    case classified(Int)
+    case classified(String)
     case fieldStatus
 }
 
@@ -138,7 +138,7 @@ final class AppState {
         guard let type = userInfo["type"] else { return }
         switch type {
         case "event":
-            if let id = userInfo["eventId"].flatMap(Int.init) {
+            if let id = userInfo["eventId"] {
                 pendingDeepLink = .event(id)
                 selectedTab = .explore
             }
@@ -153,7 +153,7 @@ final class AppState {
                 selectedTab = .lessons
             }
         case "classified":
-            if let id = userInfo["classifiedId"].flatMap(Int.init) {
+            if let id = userInfo["classifiedId"] {
                 pendingDeepLink = .classified(id)
                 selectedTab = .explore
             }

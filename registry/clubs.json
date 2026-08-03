@@ -3,8 +3,8 @@
     {
       "code": "LHMAC",
       "name": "Laurel Highlands Model Airplane Club",
-      "server": "http://73.75.137.175:9080",
-      "logo": "http://73.75.137.175:9080/api/site-images/logo"
+      "server": "http://73.79.137.175:9080",
+      "logo": "http://73.79.137.175:9080/api/site-images/logo"
     }
   ]
 }

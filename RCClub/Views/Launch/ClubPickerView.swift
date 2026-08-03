@@ -4,6 +4,7 @@ struct ClubPickerView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel = ClubPickerViewModel()
     @State private var manualCode = ""
+    @State private var showClubInquiry = false
 
     var body: some View {
         NavigationStack {
@@ -51,6 +52,11 @@ struct ClubPickerView: View {
                                     }
                                 }
                             }
+                        } footer: {
+                            Button("Don't see your club? Learn more") {
+                                showClubInquiry = true
+                            }
+                            .font(.footnote)
                         }
                     }
                     .searchable(text: $viewModel.searchText, prompt: "Search clubs")
@@ -63,6 +69,9 @@ struct ClubPickerView: View {
             if viewModel.clubs.isEmpty {
                 await viewModel.loadClubs()
             }
+        }
+        .sheet(isPresented: $showClubInquiry) {
+            ClubInquiryInfoView()
         }
     }
 

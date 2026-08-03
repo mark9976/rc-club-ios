@@ -24,6 +24,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
 
 struct AppSettingsView: View {
     @AppStorage("rcclub.appTheme") private var themeRaw = AppTheme.system.rawValue
+    @AppStorage("rcclub.biometricLockEnabled") private var biometricLockEnabled = false
 
     private var theme: Binding<AppTheme> {
         Binding(
@@ -31,6 +32,8 @@ struct AppSettingsView: View {
             set: { themeRaw = $0.rawValue }
         )
     }
+
+    private var biometryKind: BiometricAuthService.Kind { BiometricAuthService.availableKind }
 
     var body: some View {
         Form {
@@ -41,6 +44,12 @@ struct AppSettingsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+            }
+
+            if biometryKind != .none {
+                Section("Security") {
+                    Toggle("Require \(biometryKind.label)", isOn: $biometricLockEnabled)
+                }
             }
 
             Section("About") {

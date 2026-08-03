@@ -71,5 +71,7 @@
 	<string>RC Club can detect when you're near the field and prompt you to check in, even when the app isn't open.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>RC Club can add club events to your calendar.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>RC Club can use Face ID to quickly and securely unlock the app.</string>
 </dict>
 </plist>

@@ -19,7 +19,7 @@ struct PhotoUploadView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
-                if let imageData, let uiImage = UIImage(data: imageData) {
+                if let capturedData = imageData, let uiImage = UIImage(data: capturedData) {
                     Image(uiImage: uiImage)
                         .resizable()
                         .aspectRatio(contentMode: .fit)

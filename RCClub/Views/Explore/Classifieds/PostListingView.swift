@@ -78,8 +78,10 @@ struct PostListingView: View {
                 Task {
                     var data: [Data] = []
                     for item in items {
-                        if let loaded = try? await item.loadTransferable(type: Data.self) {
-                            data.append(loaded)
+                        if let loaded = try? await item.loadTransferable(type: Data.self),
+                           let uiImage = UIImage(data: loaded),
+                           let resized = uiImage.downscaledJPEGData() {
+                            data.append(resized)
                         }
                     }
                     photoData = data

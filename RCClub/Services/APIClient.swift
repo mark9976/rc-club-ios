@@ -59,7 +59,12 @@ final class APIClient: @unchecked Sendable {
     // MARK: - Requests
 
     func get<T: Decodable>(_ path: String, query: [String: String] = [:]) async throws -> T {
-        try await send(path: path, method: "GET", query: query, body: Optional<Empty>.none)
+        // Plain HTTP is subject to on-path caching by carriers/routers that
+        // ignore Cache-Control entirely — a unique URL per request defeats
+        // any cache keyed on the URL, regardless of where it sits.
+        var bustedQuery = query
+        bustedQuery["_"] = String(Int(Date().timeIntervalSince1970 * 1000))
+        return try await send(path: path, method: "GET", query: bustedQuery, body: Optional<Empty>.none)
     }
 
     @discardableResult

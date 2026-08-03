@@ -107,12 +107,14 @@ struct PhotoUploadView: View {
             }
             .onChange(of: selectedItem) { _, item in
                 Task {
-                    imageData = try? await item?.loadTransferable(type: Data.self)
+                    guard let rawData = try? await item?.loadTransferable(type: Data.self),
+                          let uiImage = UIImage(data: rawData) else { return }
+                    imageData = uiImage.downscaledJPEGData()
                 }
             }
             .fullScreenCover(isPresented: $showCamera) {
                 CameraCaptureView { image in
-                    imageData = image.jpegData(compressionQuality: 0.85)
+                    imageData = image.downscaledJPEGData()
                     showCamera = false
                 } onCancel: {
                     showCamera = false

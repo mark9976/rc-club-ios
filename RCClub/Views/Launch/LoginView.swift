@@ -3,6 +3,12 @@ import SwiftUI
 struct LoginView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel = AuthViewModel()
+    @State private var didAutoPromptBiometrics = false
+
+    private var biometryKind: BiometricAuthService.Kind { BiometricAuthService.availableKind }
+    private var showBiometricSignIn: Bool {
+        appState.hasStoredSessionPendingBiometric && biometryKind != .none
+    }
 
     var body: some View {
         NavigationStack {
@@ -22,6 +28,33 @@ struct LoginView: View {
                             .multilineTextAlignment(.center)
                     }
                     .padding(.top, 32)
+
+                    if showBiometricSignIn {
+                        VStack(spacing: 12) {
+                            Button {
+                                Task { await viewModel.signInWithBiometrics(appState: appState) }
+                            } label: {
+                                if viewModel.isLoading {
+                                    ProgressView().tint(.white)
+                                } else {
+                                    Label("Sign In with \(biometryKind.label)", systemImage: biometryKind.systemImage)
+                                        .frame(maxWidth: .infinity)
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(Color.accentTeal)
+                            .controlSize(.large)
+                            .disabled(viewModel.isLoading)
+
+                            HStack {
+                                Rectangle().frame(height: 1).foregroundStyle(.separator)
+                                Text("or sign in manually").font(.caption).foregroundStyle(.secondary)
+                                Rectangle().frame(height: 1).foregroundStyle(.separator)
+                            }
+                            .padding(.top, 4)
+                        }
+                        .padding(.horizontal)
+                    }
 
                     VStack(spacing: 16) {
                         TextField("Username", text: $viewModel.username)
@@ -70,6 +103,11 @@ struct LoginView: View {
             }
             .background(Color.screenBackground)
             .navigationBarHidden(true)
+        }
+        .task {
+            guard showBiometricSignIn, !didAutoPromptBiometrics else { return }
+            didAutoPromptBiometrics = true
+            await viewModel.signInWithBiometrics(appState: appState)
         }
     }
 }

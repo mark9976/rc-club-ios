@@ -44,6 +44,11 @@ final class AppState {
     var selectedTab: AppTab = .home
     var pendingDeepLink: DeepLink?
 
+    /// A stored session exists for the active club but hasn't been restored
+    /// yet because biometric lock is on — LoginView offers Face ID/Touch ID
+    /// to complete sign-in instead of silently restoring it.
+    var hasStoredSessionPendingBiometric = false
+
     /// Local mirror of check-in state, shared by the Home and Connect tabs
     /// so the "I'm at the Field" toggle stays in sync between them.
     var isCheckedIn: Bool = false {
@@ -175,11 +180,27 @@ final class AppState {
         guard let club = activeClub,
               let token = KeychainHelper.shared.readToken(forClub: club.id) else { return }
         APIClient.shared.configure(baseURL: club.server, token: token)
+
+        if defaults.bool(forKey: "rcclub.biometricLockEnabled") {
+            // Don't restore silently — LoginView gates this behind Face ID/Touch ID.
+            hasStoredSessionPendingBiometric = true
+            return
+        }
+
         Task {
             if let user = try? await AuthService.shared.validateSession() {
                 await MainActor.run { self.currentUser = user }
             }
         }
+    }
+
+    /// Called from LoginView after a successful Face ID/Touch ID prompt —
+    /// validates the already-stored token instead of asking for credentials.
+    func completeBiometricSignIn() async -> Bool {
+        guard let user = try? await AuthService.shared.validateSession() else { return false }
+        hasStoredSessionPendingBiometric = false
+        completeLogin(user: user)
+        return true
     }
 
     private func loadSavedClubs() {

@@ -34,7 +34,7 @@ struct ClubPickerView: View {
                             Text("Have a club code?")
                         }
 
-                        Section("Clubs") {
+                        Section {
                             ForEach(viewModel.filteredClubs) { club in
                                 Button {
                                     appState.addAndSelectClub(club)
@@ -52,6 +52,8 @@ struct ClubPickerView: View {
                                     }
                                 }
                             }
+                        } header: {
+                            Text("Clubs")
                         } footer: {
                             Button("Don't see your club? Learn more") {
                                 showClubInquiry = true

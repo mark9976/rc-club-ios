@@ -127,6 +127,8 @@ final class AppState {
     func logout() {
         guard let club = activeClub else { return }
         currentUser = nil
+        hasStoredSessionPendingBiometric = false
+        defaults.removeObject(forKey: "rcclub.biometricLoginEnabled")
         Task { await AuthService.shared.logout(clubId: club.id) }
     }
 
@@ -181,7 +183,7 @@ final class AppState {
               let token = KeychainHelper.shared.readToken(forClub: club.id) else { return }
         APIClient.shared.configure(baseURL: club.server, token: token)
 
-        if defaults.bool(forKey: "rcclub.biometricLockEnabled") {
+        if defaults.bool(forKey: "rcclub.biometricLoginEnabled") {
             // Don't restore silently — LoginView gates this behind Face ID/Touch ID.
             hasStoredSessionPendingBiometric = true
             return

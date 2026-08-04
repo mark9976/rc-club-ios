@@ -24,7 +24,7 @@ enum AppTheme: String, CaseIterable, Identifiable {
 
 struct AppSettingsView: View {
     @AppStorage("rcclub.appTheme") private var themeRaw = AppTheme.system.rawValue
-    @AppStorage("rcclub.biometricLockEnabled") private var biometricLockEnabled = false
+    @AppStorage("rcclub.biometricLoginEnabled") private var biometricLoginEnabled = false
 
     private var theme: Binding<AppTheme> {
         Binding(
@@ -47,8 +47,12 @@ struct AppSettingsView: View {
             }
 
             if biometryKind != .none {
-                Section("Security") {
-                    Toggle("Require \(biometryKind.label)", isOn: $biometricLockEnabled)
+                Section {
+                    Toggle("Sign in with \(biometryKind.label)", isOn: $biometricLoginEnabled)
+                } header: {
+                    Text("Security")
+                } footer: {
+                    Text("When on, opening the app skips your password and unlocks with \(biometryKind.label) instead.")
                 }
             }
 

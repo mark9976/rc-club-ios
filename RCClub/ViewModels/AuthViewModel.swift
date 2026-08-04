@@ -9,6 +9,11 @@ final class AuthViewModel {
     var isLoading = false
     var errorMessage: String?
 
+    /// Set after a successful manual login but held back from AppState until
+    /// the "enable Face ID?" opt-in prompt (if any) has been resolved — completing
+    /// login immediately would navigate away from LoginView before the user could answer.
+    var pendingUser: User?
+
     func signInWithBiometrics(appState: AppState) async {
         isLoading = true
         errorMessage = nil
@@ -24,7 +29,7 @@ final class AuthViewModel {
         isLoading = false
     }
 
-    func login(club: Club, appState: AppState) async {
+    func login(club: Club) async {
         guard !username.isEmpty, !password.isEmpty else {
             errorMessage = "Enter your username and password."
             return
@@ -38,7 +43,7 @@ final class AuthViewModel {
                 username: username,
                 password: password
             )
-            appState.completeLogin(user: user)
+            pendingUser = user
         } catch {
             errorMessage = error.localizedDescription
         }
